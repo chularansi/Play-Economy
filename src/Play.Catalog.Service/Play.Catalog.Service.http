@@ -1,0 +1,32 @@
+# For more info on HTTP files go to https://aka.ms/vs/httpfile
+@rootUrl=https://localhost:8000
+
+GET {{rootUrl}}/items
+
+###
+
+GET {{rootUrl}}/items/6edf0d0e-33ad-4f12-a1fb-7025ca6bff15
+
+###
+
+POST {{rootUrl}}/items
+Content-Type: application/json
+
+{
+  "name": "Potion",
+  "description": "Restores a small amount of HP",
+  "price": 5
+}
+###
+
+PUT {{rootUrl}}/items/0873a107-fd33-4f75-86e4-481f96b48481
+Content-Type: application/json
+
+{
+  "name": "Antidote",
+  "description": "Cures poisen",
+  "price": 9
+}
+###
+
+DELETE {{rootUrl}}/items/6edf0d0e-33ad-4f12-a1fb-7025ca6bff15

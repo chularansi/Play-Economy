@@ -1,0 +1,14 @@
+@rootUrl=https://localhost:8001
+
+GET {{rootUrl}}/items?userId=b607f7ab-3122-4dc7-99c9-5c1bfa82e6da
+
+###
+# 9e3a4690-2383-4f6a-900c-03b7fbacfef8
+# 2d5ffc4a-7f06-47ce-b7df-64b95e200eca - keycloak userId
+POST {{rootUrl}}/items
+Content-Type: application/json
+{
+  "userId": "{{$guid}}",
+  "catalogItemId": "92453fe9-daba-47f8-8e81-257a7dd1aea7",
+  "quantity": 1
+}

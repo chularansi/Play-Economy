@@ -1,0 +1,128 @@
+version: "3.9"
+services:
+#   play.catalog.service:
+#     environment:
+#       - ASPNETCORE_ENVIRONMENT=Development
+#       - ASPNETCORE_HTTP_PORTS=8080
+#       - ASPNETCORE_HTTPS_PORTS=8081
+#     ports:
+#       - "8080"
+#       - "8081"
+#     volumes:
+#       - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
+#       - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+#       - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
+#       - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+# depends_on:
+#       - keycloak
+#     networks:
+#       - app-network 
+
+  mongo:
+    container_name: mongo
+    image: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodbdata:/data/db
+
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmqdata:/var/lib/rabbitmq
+    hostname: rabbitmq
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.3.1
+    container_name: keycloak
+    ports:
+      - "8080:8080"
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/userdb
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: p@ssword
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    volumes:
+      - ./providers-keycloak:/opt/keycloak/providers/
+    #   - keycloak-data:/opt/keycloak/data
+    command: ["start-dev"]
+    depends_on:
+      - postgres
+    # networks:
+    #   - app-network
+
+  postgres:
+    image: postgres:17.4
+    container_name: postgres-keycloak
+    environment:
+      POSTGRES_DB: userdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: p@ssword
+      # ACCEPT_EULA: Y Required for SQL Server
+      # SA_PASSWORD: yourStrongPassword! Required for SQL Server
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_keycloack:/var/lib/postgresql/data
+      # - ../init.sql:/docker-entrypoint-initdb.d/init.sql Mount your script
+          # For SQL Server, the path is typically /var/opt/mssql/data or a custom volume
+          # - ./init.sql:/var/opt/mssql/data/init.sql
+    # networks:
+    #   - app-network
+
+  seq:
+    image: datalust/seq:latest # Use the latest stable Seq image
+    container_name: seq
+    environment:
+      - ACCEPT_EULA=Y
+      - SEQ_FIRSTRUN_NOAUTHENTICATION=True
+      # Optional: Set an initial administrator password (use a hashed password for production)
+      # - SEQ_FIRSTRUN_ADMINPASSWORDHASH=your_hashed_password_here
+    ports:
+      - "5341:5341" # Map host port 5341 to container port 80 (for UI and ingestion)
+      - "8081:80"    # Optional: If you want to expose Seq on port 80
+    volumes:
+      - seqdata:/data
+    restart: unless-stopped
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    ports:
+      - "6831:6831/udp" # Agent Thrift Compact
+      - "6832:6832/udp" # Agent Thrift Binary
+      - "5778:5778"    # Agent Configuration
+      - "16686:16686"  # Jaeger UI
+      - "14268:14268"  # Collector HTTP
+      - "14250:14250"  # Collector gRPC
+      - "4317:4317"    # OpenTelemetry Collector gRPC
+      - "4318:4318"    # OpenTelemetry Collector HTTP
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true # Enable OpenTelemetry Protocol for collector
+
+  prometheus: 
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./otel.yml:/etc/prometheus/prometheus.yml
+      - prometheusdata:/prometheus
+
+volumes:
+  mongodbdata:
+  rabbitmqdata:
+  # keycloak-data:
+  postgres_data_keycloack:
+  seqdata:
+  prometheusdata:
+
+# networks:
+#   app-network:
+#     driver: bridge

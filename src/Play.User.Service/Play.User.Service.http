@@ -1,0 +1,15 @@
+@rootUrl=https://localhost:8002
+
+GET {{rootUrl}}/users
+
+###
+
+GET {{rootUrl}}/users/5ddcc137-f2c6-4253-a145-1c87e43ee806
+
+###
+
+PUT {{rootUrl}}/users/5ddcc137-f2c6-4253-a145-1c87e43ee806
+Content-Type: application/json
+{
+  "gil": 200
+}
